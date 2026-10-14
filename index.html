@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class Supervision Dashboard — Ensieh Safariyan</title>
+<style>
+:root{
+  --navy-900:#081730; --navy-800:#0b1f3f; --navy-700:#12294d; --navy-600:#1b3a66;
+  --blue-soft:#8fb4ff; --blue-bright:#5b8cff; --lavender:#b9a8f5; --lavender-deep:#8f7ae0;
+  --ink:#0e1c33; --muted:#5d6f8f; --line:rgba(143,180,255,.16);
+  --card:rgba(255,255,255,.045); --card-strong:rgba(255,255,255,.075);
+  --good:#43d9a3; --warn:#ffc857; --bad:#ff7b8a; --info:#6ea8ff;
+  --radius:16px; --shadow:0 10px 30px rgba(3,10,25,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(143,180,255,.14), transparent 60%),
+    radial-gradient(900px 500px at -10% 20%, rgba(185,168,245,.12), transparent 55%),
+    linear-gradient(160deg,#081730 0%,#0b1f3f 45%,#0d2347 100%);
+  color:#e9effc; min-height:100vh; line-height:1.55;
+}
+button{font:inherit;cursor:pointer;border:none}
+input,select,textarea{font:inherit;color:#e9effc}
+::placeholder{color:#6f81a3}
+.wrap{max-width:1280px;margin:0 auto;padding:0 22px 90px}
+h1,h2,h3,h4{font-weight:700;letter-spacing:.2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- Header ---------- */
+header.app{
+  position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);
+  background:linear-gradient(180deg,rgba(8,23,48,.92),rgba(8,23,48,.78));
+  border-bottom:1px solid var(--line);
+}
+.header-inner{max-width:1280px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{
+  width:52px;height:52px;border-radius:15px;display:grid;place-items:center;font-size:26px;
+  background:linear-gradient(135deg,#31589f,#7a68d8);box-shadow:0 8px 22px rgba(60,100,200,.45);
+}
+.brand h1{font-size:1.25rem;background:linear-gradient(90deg,#fff,#b9a8f5);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand p{font-size:.78rem;color:var(--blue-soft);letter-spacing:.6px;text-transform:uppercase}
+.supervisor-chip{
+  margin-left:auto;display:flex;align-items:center;gap:10px;padding:8px 16px;border-radius:999px;
+  background:var(--card-strong);border:1px solid var(--line);font-size:.9rem;
+}
+.supervisor-chip .avatar{
+  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.85rem;
+  background:linear-gradient(135deg,#8f7ae0,#5b8cff);color:#fff;
+}
+.save-state{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.save-state .dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
+
+/* ---------- Tabs ---------- */
+nav.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 6px}
+nav.tabs button{
+  padding:11px 20px;border-radius:12px;background:var(--card);color:#c9d7f5;border:1px solid var(--line);
+  transition:.22s;font-weight:600;font-size:.92rem;display:flex;gap:8px;align-items:center;
+}
+nav.tabs button:hover{background:var(--card-strong);transform:translateY(-1px)}
+nav.tabs button.active{
+  background:linear-gradient(135deg,#31589f,#6a5acd);color:#fff;border-color:transparent;
+  box-shadow:0 8px 20px rgba(70,110,220,.4);
+}
+.view{display:none;animation:fadeIn .35s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- Stat cards ---------- */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:16px;margin-top:22px}
+.stat{
+  position:relative;overflow:hidden;border-radius:var(--radius);padding:20px;border:1px solid var(--line);
+  background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));box-shadow:var(--shadow);
+}
+.stat::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;
+  background:radial-gradient(circle,var(--glow,rgba(91,140,255,.28)),transparent 70%)}
+.stat .icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;margin-bottom:12px;
+  background:rgba(255,255,255,.09);border:1px solid var(--line)}
+.stat .num{font-size:2.15rem;font-weight:800;line-height:1.1}
+.stat .lbl{font-size:.82rem;color:var(--blue-soft);margin-top:4px;letter-spacing:.3px}
+
+/* ---------- Chart ---------- */
+.panel{
+  border-radius:var(--radius);border:1px solid var(--line);background:var(--card);
+  padding:24px;margin-top:24px;box-shadow:var(--shadow);
+}
+.panel h2{font-size:1.15rem;margin-bottom:4px}
+.panel .sub{font-size:.85rem;color:var(--muted);margin-bottom:18px}
+.bars{display:grid;gap:14px}
+.bar-row{display:grid;grid-template-columns:minmax(190px,260px) 1fr 44px;gap:12px;align-items:center;font-size:.88rem}
+.bar-track{height:22px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;border:1px solid var(--line)}
+.bar-fill{height:100%;border-radius:999px;width:0;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.bar-count{text-align:right;font-weight:700;color:#fff}
+
+/* ---------- Category sub-tabs ---------- */
+.cat-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 4px}
+.cat-tabs button{
+  padding:12px 18px;border-radius:14px;background:var(--card);border:1px solid var(--line);color:#c9d7f5;
+  text-align:left;transition:.2s;min-width:200px;
+}
+.cat-tabs button:hover{background:var(--card-strong)}
+.cat-tabs button.active{border-color:var(--accent,#5b8cff);background:linear-gradient(160deg,rgba(91,140,255,.18),rgba(143,126,224,.12));
+  box-shadow:0 6px 18px rgba(60,100,200,.28)}
+.cat-tabs .ct-title{font-weight:700;font-size:.88rem;display:flex;gap:8px;align-items:center}
+.cat-tabs .ct-count{font-size:.75rem;color:var(--muted)}
+
+/* ---------- Filter bar ---------- */
+.filters{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:18px 0;
+  padding:16px;border-radius:var(--radius);border:1px solid var(--line);background:var(--card);
+}
+.filters input,.filters select{
+  padding:11px 13px;border-radius:11px;background:rgba(8,23,48,.6);border:1px solid var(--line);outline:none;transition:.2s;width:100%;
+}
+.filters input:focus,.filters select:focus{border-color:var(--blue-bright);box-shadow:0 0 0 3px rgba(91,140,255,.18)}
+.filters .check{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#c9d7f5;padding:0 4px}
+.filters .check input{width:auto;transform:scale(1.25)}
+.btn{
+  padding:11px 18px;border-radius:11px;font-weight:600;font-size:.9rem;transition:.2s;
+  display:inline-flex;align-items:center;gap:8px;justify-content:center;
+}
+.btn-primary{background:linear-gradient(135deg,#3f6fd1,#7a68d8);color:#fff;box-shadow:0 8px 20px rgba(70,110,220,.35)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(70,110,220,.5)}
+.btn-ghost{background:var(--card-strong);color:#d5e1fa;border:1px solid var(--line)}
+.btn-ghost:hover{background:rgba(255,255,255,.13)}
+.btn-danger{background:rgba(255,123,138,.14);color:#ffb3bc;border:1px solid rgba(255,123,138,.4)}
+.btn-danger:hover{background:rgba(255,123,138,.25)}
+.btn-sm{padding:7px 12px;font-size:.8rem;border-radius:9px}
+
+/* ---------- Class cards ---------- */
+.class-list{display:grid;gap:14px;margin-top:8px}
+.class-card{
+  border-radius:var(--radius);border:1px solid var(--line);overflow:hidden;
+  background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));box-shadow:var(--shadow);
+  transition:border-color .25s;
+}
+.class-card:hover{border-color:rgba(143,180,255,.4)}
+.class-card.flag{border-color:rgba(255,123,138,.5)}
+.card-head{
+  width:100%;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;
+  padding:16px 20px;background:transparent;color:inherit;text-align:left;
+}
+.card-head:hover{background:rgba(255,255,255,.035)}
+.teacher-avatar{
+  width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-weight:800;font-size:1rem;
+  background:linear-gradient(135deg,var(--av1,#3f6fd1),var(--av2,#7a68d8));color:#fff;flex-shrink:0;
+}
+.card-head .t-name{font-weight:700;font-size:1.02rem}
+.card-head .t-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:6px}
+.chip{font-size:.72rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:#cfdbf6;white-space:nowrap}
+.chip.level{background:rgba(143,126,224,.16);border-color:rgba(143,126,224,.4);color:#d6cbff}
+.chip.fmt-ip{background:rgba(67,217,163,.13);border-color:rgba(67,217,163,.35);color:#a9f0d6}
+.chip.fmt-on{background:rgba(110,168,255,.13);border-color:rgba(110,168,255,.35);color:#bcd6ff}
+.chip.warn{background:rgba(255,200,87,.14);border-color:rgba(255,200,87,.4);color:#ffe1a1}
+.chip.bad{background:rgba(255,123,138,.15);border-color:rgba(255,123,138,.45);color:#ffc2ca}
+.chip.good{background:rgba(67,217,163,.13);border-color:rgba(67,217,163,.35);color:#a9f0d6}
+.expand-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.07);
+  border:1px solid var(--line);transition:.3s;font-size:1.05rem;color:var(--blue-soft)}
+.class-card.open .expand-ic{transform:rotate(180deg);background:rgba(91,140,255,.25)}
+.card-body{display:none;padding:6px 20px 22px;border-top:1px solid var(--line)}
+.class-card.open .card-body{display:block;animation:fadeIn .3s ease}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:16px}
+.detail-box{border-radius:13px;border:1px solid var(--line);background:rgba(8,23,48,.42);padding:16px}
+.detail-box h4{font-size:.82rem;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-soft);margin-bottom:12px;
+  display:flex;align-items:center;gap:8px}
+.detail-box textarea,.detail-box input[type=text],.detail-box select{
+  width:100%;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);
+  border:1px solid var(--line);outline:none;transition:.2s;
+}
+.detail-box textarea{min-height:110px;resize:vertical;line-height:1.6}
+.detail-box input:focus,.detail-box textarea:focus,.detail-box select:focus{border-color:var(--blue-bright);box-shadow:0 0 0 3px rgba(91,140,255,.15)}
+.sup-box{border-color:rgba(185,168,245,.35);background:linear-gradient(160deg,rgba(143,126,224,.09),rgba(8,23,48,.42))}
+.teacher-box{border-color:rgba(110,168,255,.3)}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:4px;letter-spacing:.4px}
+.mini-stats{display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:2px 0 6px}
+.mini-stats b{color:#fff;font-size:.95rem}
+
+/* students */
+.student-row{
+  display:grid;grid-template-columns:auto 1fr 150px 1.4fr auto;gap:8px;align-items:center;
+  padding:8px;border-radius:10px;margin-bottom:6px;background:rgba(255,255,255,.04);border:1px solid transparent;
+}
+.student-row:nth-child(odd){background:rgba(255,255,255,.06)}
+.student-row.hl{border-color:var(--warn);background:rgba(255,200,87,.12);animation:pulse 1.2s ease 2}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(255,200,87,.25)}}
+.student-row .idx{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:.72rem;
+  background:rgba(91,140,255,.2);color:#bcd6ff;font-weight:700}
+.student-row input,.student-row select{padding:7px 10px;border-radius:8px;background:rgba(8,23,48,.55);
+  border:1px solid var(--line);color:#e9effc;font-size:.85rem;min-width:0}
+.student-row input:focus,.student-row select:focus{border-color:var(--blue-bright);outline:none}
+.status-sel{font-size:.8rem}
+.support-tag{font-size:.66rem;padding:2px 8px;border-radius:999px;background:rgba(255,123,138,.18);color:#ffc2ca;border:1px solid rgba(255,123,138,.4)}
+.empty-note{padding:14px;text-align:center;color:var(--muted);font-size:.86rem;border:1px dashed var(--line);border-radius:10px}
+
+/* follow-ups */
+.fu-item{
+  display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start;
+  border-radius:13px;border:1px solid var(--line);background:var(--card);padding:16px;margin-bottom:12px;
+}
+.fu-item.done{opacity:.62}
+.fu-prio{font-size:.68rem;font-weight:800;padding:4px 10px;border-radius:999px;letter-spacing:.5px}
+.prio-High{background:rgba(255,123,138,.16);color:#ffc2ca;border:1px solid rgba(255,123,138,.45)}
+.prio-Medium{background:rgba(255,200,87,.14);color:#ffe1a1;border:1px solid rgba(255,200,87,.4)}
+.prio-Low{background:rgba(110,168,255,.14);color:#bcd6ff;border:1px solid rgba(110,168,255,.4)}
+.fu-item h4{font-size:.98rem;margin-bottom:4px}
+.fu-item .fu-desc{font-size:.86rem;color:#c3d1ee}
+.fu-item .fu-meta{font-size:.75rem;color:var(--muted);margin-top:6px;display:flex;gap:14px;flex-wrap:wrap}
+
+/* modal */
+.modal-back{position:fixed;inset:0;background:rgba(4,10,22,.72);backdrop-filter:blur(6px);z-index:100;
+  display:none;align-items:center;justify-content:center;padding:20px}
+.modal-back.show{display:flex;animation:fadeIn .25s}
+.modal{
+  width:min(640px,100%);max-height:88vh;overflow:auto;border-radius:20px;padding:28px;
+  background:linear-gradient(165deg,#12294d,#0b1f3f);border:1px solid rgba(143,180,255,.3);box-shadow:0 30px 80px rgba(0,0,0,.6);
+  animation:popIn .3s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes popIn{from{opacity:0;transform:scale(.92) translateY(14px)}to{opacity:1;transform:none}}
+.modal h3{margin-bottom:18px;font-size:1.2rem}
+.modal .field input,.modal .field select,.modal .field textarea{
+  width:100%;padding:11px 13px;border-radius:11px;background:rgba(8,23,48,.6);border:1px solid var(--line);color:#e9effc}
+.modal .field textarea{min-height:90px;resize:vertical}
+.modal .field input:focus,.modal .field select:focus,.modal .field textarea:focus{border-color:var(--blue-bright);outline:none;box-shadow:0 0 0 3px rgba(91,140,255,.15)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.form-error{display:none;color:#ffb3bc;font-size:.82rem;background:rgba(255,123,138,.12);border:1px solid rgba(255,123,138,.4);
+  padding:9px 13px;border-radius:10px;margin-top:12px}
+.form-error.show{display:block;animation:fadeIn .3s}
+
+/* toast */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);z-index:200;
+  background:linear-gradient(135deg,#1d3a6b,#3d3480);border:1px solid rgba(143,180,255,.4);color:#fff;
+  padding:12px 22px;border-radius:999px;font-size:.88rem;box-shadow:0 14px 40px rgba(0,0,0,.5);
+  transition:transform .35s cubic-bezier(.2,.9,.3,1.2);display:flex;gap:9px;align-items:center;pointer-events:none}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-state .big{font-size:3rem;margin-bottom:12px;opacity:.7}
+
+/* unassigned banner */
+.unassigned{border:1px dashed rgba(255,200,87,.55);border-radius:var(--radius);padding:18px;margin:14px 0;
+  background:rgba(255,200,87,.06)}
+.unassigned h3{color:#ffe1a1;font-size:.95rem;margin-bottom:6px}
+
+.section-title{display:flex;align-items:center;gap:12px;margin:30px 0 6px;flex-wrap:wrap}
+.section-title h2{font-size:1.3rem}
+.section-title .hint{font-size:.8rem;color:var(--muted)}
+
+/* data view */
+.data-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.data-card{border-radius:var(--radius);border:1px solid var(--line);background:var(--card);padding:22px}
+.data-card h3{font-size:1rem;margin-bottom:8px}
+.data-card p{font-size:.82rem;color:var(--muted);margin-bottom:14px}
+
+/* print */
+#printRoot{display:none}
+@media print{
+  body{background:#fff;color:#111}
+  header.app,nav.tabs,.filters,.cat-tabs,.btn,.expand-ic,.card-body .no-print,.modal-back,#toast,.save-state,.card-actions,.student-row .row-del{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .view{display:block!important}
+  .class-card{box-shadow:none;border:1px solid #bbb;break-inside:avoid;margin-bottom:12px;background:#fff}
+  .card-head{color:#111}
+  .card-head .t-name,.stat .num,.bar-count{color:#111!important;-webkit-text-fill-color:#111}
+  .chip{color:#222;border-color:#999;background:#f3f3f3}
+  .detail-box,.detail-box input,.detail-box textarea,.detail-box select{background:#fff;color:#111;border-color:#ccc}
+  .detail-box h4,.field label{color:#444}
+  .class-card .card-body{display:block!important}
+  .student-row{background:#fafafa;border:1px solid #ddd}
+  .student-row input,.student-row select{background:#fff;color:#111;border-color:#bbb}
+  #printRoot{display:block;color:#111}
+  .fu-item{background:#fff;border-color:#bbb}
+  .fu-item h4,.fu-item .fu-desc,.fu-item .fu-meta{color:#111}
+}
+@media (max-width:760px){
+  .student-row{grid-template-columns:auto 1fr;grid-auto-rows:auto}
+  .bar-row{grid-template-columns:1fr;gap:4px}
+  .card-head{grid-template-columns:auto 1fr}
+  .expand-ic{display:none}
+  .header-inner{gap:10px}
+  .supervisor-chip{margin-left:0}
+}
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🎓</div>
+      <div>
+        <h1>Class Supervision Dashboard</h1>
+        <p>Academic Supervision · Class Management · Teacher Evaluation</p>
+      </div>
+    </div>
+    <div class="supervisor-chip">
+      <div class="avatar">ES</div>
+      <div>
+        <div style="font-weight:700">Ensieh Safariyan</div>
+        <div class="save-state"><span class="dot"></span><span id="saveText">All changes saved</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <nav class="tabs" aria-label="Main navigation">
+    <button data-view="dashboard" class="active">📊 Dashboard</button>
+    <button data-view="classes">🏫 Classes</button>
+    <button data-view="followup">✅ Follow-Up &amp; Actions</button>
+    <button data-view="data">💾 Data &amp; Reports</button>
+  </nav>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section id="view-dashboard" class="view active">
+    <div class="section-title">
+      <h2>Overview</h2><span class="hint">All statistics update automatically as class information changes.</span>
+    </div>
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="panel">
+      <h2>Class Distribution</h2>
+      <p class="sub">Classes by schedule and teaching format</p>
+      <div class="bars" id="chartBars"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Teachers Overview</h2>
+      <p class="sub" id="teacherCountSub"></p>
+      <div id="teacherList" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    </div>
+  </section>
+
+  <!-- ============ CLASSES ============ -->
+  <section id="view-classes" class="view">
+    <div class="section-title">
+      <h2>Class Schedule Organization</h2>
+      <span style="flex:1"></span>
+      <button class="btn btn-primary" id="btnAddClass">＋ Add New Class</button>
+    </div>
+
+    <div class="cat-tabs" id="catTabs"></div>
+
+    <div class="filters" role="search">
+      <input type="text" id="fSearch" placeholder="🔎 Search teacher, student, level…" aria-label="Search">
+      <select id="fTeacher" aria-label="Filter by teacher"><option value="">All Teachers</option></select>
+      <select id="fLevel" aria-label="Filter by level"><option value="">All Levels</option></select>
+      <select id="fSchedule" aria-label="Filter by schedule">
+        <option value="">All Schedules</option>
+        <option value="sat">Saturdays and Every Other Day</option>
+        <option value="sun">Sundays and Every Other Day</option>
+      </select>
+      <select id="fFormat" aria-label="Filter by format">
+        <option value="">All Formats</option>
+        <option value="inperson">In-Person</option>
+        <option value="online">Online</option>
+      </select>
+      <select id="fEval" aria-label="Filter by evaluation status">
+        <option value="">All Evaluations</option>
+        <option>Satisfactory</option>
+        <option>Needs Follow-Up</option>
+        <option>Requires Improvement</option>
+        <option>Reassessment Needed</option>
+        <option>Not Evaluated</option>
+      </select>
+      <select id="fSort" aria-label="Sort classes">
+        <option value="time">Sort by Time</option>
+        <option value="teacher">Sort by Teacher</option>
+        <option value="level">Sort by Level</option>
+      </select>
+      <label class="check"><input type="checkbox" id="fFollowUp"> Requiring follow-up only</label>
+      <button class="btn btn-ghost btn-sm" id="btnResetFilters" style="align-self:center">↺ Reset Filters</button>
+    </div>
+
+    <div id="unassignedBox"></div>
+    <div class="class-list" id="classList"></div>
+    <div class="empty-state" id="classesEmpty" style="display:none">
+      <div class="big">🗂️</div>
+      <h3>No classes match the current filters</h3>
+      <p>Try adjusting the search or filters, or add a new class.</p>
+    </div>
+  </section>
+
+  <!-- ============ FOLLOW-UP ============ -->
+  <section id="view-followup" class="view">
+    <div class="section-title">
+      <h2>Follow-Up &amp; Action Items</h2>
+      <span style="flex:1"></span>
+      <button class="btn btn-primary" id="btnAddFollowUp">＋ Add Follow-Up Item</button>
+    </div>
+    <div class="filters" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <select id="fuFilterStatus">
+        <option value="">All Tasks</option>
+        <option value="Pending">Pending</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Completed">Completed</option>
+      </select>
+      <select id="fuFilterPrio">
+        <option value="">All Priorities</option>
+        <option>High</option><option>Medium</option><option>Low</option>
+      </select>
+      <input type="text" id="fuSearch" placeholder="🔎 Search follow-up items…">
+    </div>
+    <div class="mini-stats" id="fuSummary"></div>
+    <div id="followUpList"></div>
+    <div class="empty-state" id="fuEmpty" style="display:none">
+      <div class="big">✅</div><h3>No follow-up items</h3><p>Add tasks to track observations, guidance and student support.</p>
+    </div>
+  </section>
+
+  <!-- ============ DATA & REPORTS ============ -->
+  <section id="view-data" class="view">
+    <div class="section-title"><h2>Data Storage, Backup &amp; Reports</h2></div>
+    <div class="panel">
+      <h2>Backup &amp; Restore</h2>
+      <p class="sub">All changes are saved automatically in this browser (local storage). Use the options below for manual backups.</p>
+      <div class="data-actions">
+        <div class="data-card">
+          <h3>💾 Manual Save</h3><p>Force-save all current data to browser storage.</p>
+          <button class="btn btn-primary" id="btnManualSave">Save Now</button>
+        </div>
+        <div class="data-card">
+          <h3>📤 Export JSON Backup</h3><p>Download a complete JSON backup of all dashboard data.</p>
+          <button class="btn btn-ghost" id="btnExportJson">Export JSON</button>
+        </div>
+        <div class="data-card">
+          <h3>📥 Import JSON Backup</h3><p>Restore a previously exported JSON file. Current data will be replaced.</p>
+          <button class="btn btn-ghost" id="btnImportJson">Import JSON…</button>
+          <input type="file" id="importFile" accept=".json,application/json" class="sr">
+        </div>
+        <div class="data-card">
+          <h3>📑 Export CSV</h3><p>Download class lists and student records as CSV files.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" id="btnCsvClasses">Classes CSV</button>
+            <button class="btn btn-ghost btn-sm" id="btnCsvStudents">Students CSV</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Print Reports</h2>
+      <p class="sub">Print-friendly reports hide navigation and controls automatically.</p>
+      <div class="data-actions">
+        <div class="data-card"><h3>🖨️ Full Dashboard Report</h3><p>All classes with full details, feedback and evaluations.</p><button class="btn btn-ghost" data-print="all">Print Full Report</button></div>
+        <div class="data-card"><h3>🗓️ Category Summaries</h3><p>Print a summary for each schedule &amp; format category.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" data-print="cat" data-cat="sat-in">Sat · In-Person</button>
+            <button class="btn btn-ghost btn-sm" data-print="cat" data-cat="sat-on">Sat · Online</button>
+            <button class="btn btn-ghost btn-sm" data-print="cat" data-cat="sun-in">Sun · In-Person</button>
+            <button class="btn btn-ghost btn-sm" data-print="cat" data-cat="sun-on">Sun · Online</button>
+          </div>
+        </div>
+        <div class="data-card"><h3>✅ Follow-Up Report</h3><p>All pending and completed follow-up actions.</p><button class="btn btn-ghost" data-print="followup">Print Follow-Up Report</button></div>
+        <div class="data-card"><h3>👥 Student Records</h3><p>Complete student lists with statuses and notes.</p><button class="btn btn-ghost" data-print="students">Print Student Records</button></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Danger Zone</h2>
+      <p class="sub">Permanently clear all locally stored data and restore the original starting data. This cannot be undone unless you have a JSON backup.</p>
+      <button class="btn btn-danger" id="btnResetAll">🗑 Reset All Data</button>
+    </div>
+  </section>
+
+</div><!-- /wrap -->
+
+<!-- ============ MODALS ============ -->
+<div class="modal-back" id="classModalBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="classModalTitle">
+    <h3 id="classModalTitle">Add New Class</h3>
+    <form id="classForm" novalidate>
+      <input type="hidden" id="cfId">
+      <div class="field"><label for="cfTeacher">Teacher's Full Name *</label><input type="text" id="cfTeacher" required placeholder="e.g. Mrs. Zahra Ahmadi"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label for="cfLevel">Class Level</label><input type="text" id="cfLevel" placeholder="e.g. ADC4, IELTS 2"></div>
+        <div class="field"><label for="cfTime">Class Time</label><input type="text" id="cfTime" placeholder="e.g. 17:00–18:30"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label for="cfSchedule">Schedule Category *</label>
+          <select id="cfSchedule" required>
+            <option value="">— Select —</option>
+            <option value="sat">Saturdays and Every Other Day</option>
+            <option value="sun">Sundays and Every Other Day</option>
+          </select>
+        </div>
+        <div class="field"><label for="cfFormat">Class Format *</label>
+          <select id="cfFormat" required>
+            <option value="">— Select —</option>
+            <option value="inperson">In-Person</option>
+            <option value="online">Online</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label for="cfStudents">Student List <span style="color:var(--muted)">(one name per line — optional, can be added later)</span></label>
+        <textarea id="cfStudents" placeholder="Student names, one per line"></textarea></div>
+      <div class="field"><label for="cfNotes">Additional Notes</label><textarea id="cfNotes" placeholder="General class notes, classroom performance notes…"></textarea></div>
+      <div class="form-error" id="classFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">💾 Save Class</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-back" id="fuModalBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="fuModalTitle">
+    <h3 id="fuModalTitle">Add Follow-Up Item</h3>
+    <form id="fuForm" novalidate>
+      <input type="hidden" id="ffId">
+      <div class="field"><label for="ffClass">Related Class</label><select id="ffClass"><option value="">— General / Not linked to a class —</option></select></div>
+      <div class="field"><label for="ffTeacher">Teacher's Name</label><input type="text" id="ffTeacher" placeholder="Auto-filled from class (editable)"></div>
+      <div class="field"><label for="ffDesc">Description *</label><textarea id="ffDesc" required placeholder="e.g. Provide Speaking support for identified students"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div class="field"><label for="ffPrio">Priority</label><select id="ffPrio"><option>Low</option><option selected>Medium</option><option>High</option></select></div>
+        <div class="field"><label for="ffStatus">Status</label><select id="ffStatus"><option selected>Pending</option><option>In Progress</option><option>Completed</option></select></div>
+        <div class="field"><label for="ffDue">Due Date (optional)</label><input type="date" id="ffDue" style="width:100%;padding:11px 13px;border-radius:11px;background:rgba(8,23,48,.6);border:1px solid var(--line);color:#e9effc"></div>
+      </div>
+      <div class="form-error" id="fuFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">💾 Save Item</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-back" id="confirmBack">
+  <div class="modal" style="width:min(460px,100%)" role="alertdialog" aria-modal="true">
+    <h3 id="confirmTitle">Confirm</h3>
+    <p id="confirmMsg" style="color:#c3d1ee;font-size:.92rem;margin-top:6px"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-danger" id="confirmYes">Yes, Continue</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+<div id="printRoot" aria-hidden="true"></div>
+
+<script>
+/* ============================================================
+   Class Supervision Dashboard — Ensieh Safariyan
+   Single-file vanilla JS app. Data persists in localStorage.
+   ============================================================ */
+'use strict';
+
+const SCHEDULE_LABEL = { sat:'Saturdays and Every Other Day', sun:'Sundays and Every Other Day' };
+const FORMAT_LABEL   = { inperson:'In-Person', online:'Online' };
+const CATEGORIES = [
+  { id:'sat-in', schedule:'sat', format:'inperson', icon:'🏫', label:'Saturdays and Every Other Day — In-Person Classes', short:'Sat · In-Person', accent:'#43d9a3' },
+  { id:'sat-on', schedule:'sat', format:'online',   icon:'🖥️', label:'Saturdays and Every Other Day — Online Classes',  short:'Sat · Online',  accent:'#6ea8ff' },
+  { id:'sun-in', schedule:'sun', format:'inperson', icon:'🏫', label:'Sundays and Every Other Day — In-Person Classes',   short:'Sun · In-Person', accent:'#b9a8f5' },
+  { id:'sun-on', schedule:'sun', format:'online',   icon:'🖥️', label:'Sundays and Every Other Day — Online Classes',    short:'Sun · Online',  accent:'#ffc857' }
+];
+const STATUSES = ['Excellent','Good','Satisfactory','Needs Improvement','Absent'];
+const EVAL_STATUSES = ['Satisfactory','Needs Follow-Up','Requires Improvement','Reassessment Needed'];
+const STORE_KEY = 'es_class_supervision_v1';
+
+const uid = () => 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8);
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function stu(name, status, notes, obs){ return { id: uid(), name, status: status || '', notes: notes || '', observation: obs || '' }; }
+function cls(o){
+  return Object.assign({
+    id: uid(), teacher:'', level:'', time:'', schedule:'', format:'',
+    students:[], notes:'',
+    teacherFeedback:{ text:'', date:'' },
+    supervisorFeedback:{
+      overall:'', teachingQuality:'', classroomManagement:'', studentEngagement:'',
+      lessonPlan:'', strengths:'', weaknesses:'', improvements:'', recommendations:'',
+      followUpActions:'', detailedNotes:'', status:'', date:''
+    }
+  }, o);
+}
+
+/* ---------- Default data: pre-loaded from supervision reports ---------- */
+const DEFAULT_DATA = { classes: [], followUps: [], meta: { supervisor:'Ensieh Safariyan', created:'2026-10-14' } };
+
+/* Sundays and Every Other Day — 15:30 */
+(function(){
+  const T = '15:30';
+  const S = [], F = [];
+
+  // 1. Mrs. Morteza Pour — format not stated in source report
+  S.push(cls({ teacher:'Mrs. Morteza Pour', level:'I2', time:T, schedule:'sun', format:'',
+    declaredStudents:6,
+    supervisorFeedback:{ status:'Satisfactory', detailedNotes:'No weak students identified.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  // 2. Barataali — format not stated
+  S.push(cls({ teacher:'Barataali', level:'ADC2', time:T, schedule:'sun', format:'',
+    declaredStudents:3,
+    supervisorFeedback:{ status:'Satisfactory', detailedNotes:'No weak students identified.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  // 3. Zeynab Karimi — format not stated
+  S.push(cls({ teacher:'Zeynab Karimi', level:'ADC12', time:T, schedule:'sun', format:'',
+    students:[ stu('Ava Moradi','Needs Improvement','Weak in Reading (identified by teacher evaluation).','Teacher evaluation: Weak in Reading.') ],
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'No weak students identified. Listening and P.I.Q. were assessed.' },
+    teacherFeedback:{ text:'Ava Moradi: Weak in Reading.' } }));
+
+  // 4. Tayebeh Hosseini — Online
+  const t9students = [
+    stu('Hana Fazeli Nia','Needs Improvement','Weak in Listening and Speaking.','Weak in Listening and Speaking.'),
+    stu('Hanieh Fallah','Needs Improvement','Weak in Speaking.','Weak in Speaking.'),
+    stu('Mehrsa Mohammadi','Needs Improvement','Weak in Speaking.','Weak in Speaking.'),
+    stu('Hasti Adavi','Needs Improvement','Weak in Speaking.','Weak in Speaking.'),
+    stu('Ainaz Kashaf','Needs Improvement','Weak in Speaking.','Weak in Speaking.'),
+    stu('Mahdis Aslani','Needs Improvement','Weak in Speaking.','Weak in Speaking.'),
+    stu('Sheida Hatami','Needs Improvement','Weak in Speaking.','Weak in Speaking.'),
+    stu('Negar Salehi','Needs Improvement','Weak in Speaking.','Weak in Speaking.')
+  ];
+  const t9eval = 'Hana Fazeli Nia: Weak in Listening and Speaking.\nHanieh Fallah: Weak in Speaking.\nMehrsa Mohammadi: Weak in Speaking.\nHasti Adavi: Weak in Speaking.\nAinaz Kashaf: Weak in Speaking.\nMahdis Aslani: Weak in Speaking.\nSheida Hatami: Weak in Speaking.\nNegar Salehi: Weak in Speaking.';
+  S.push(cls({ teacher:'Tayebeh Hosseini', level:'T9', time:T, schedule:'sun', format:'online',
+    students:t9students,
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:t9eval,
+      followUpActions:'Provide intensive Speaking support for all 8 identified students; continue combined Listening and Speaking support for Hana Fazeli Nia.' },
+    teacherFeedback:{ text:t9eval } }));
+
+  // 5. Leili Rahnama — On-site
+  S.push(cls({ teacher:'Leili Rahnama', level:'ADC9', time:T, schedule:'sun', format:'inperson',
+    declaredStudents:13,
+    students:[ stu('Nasim Jiriaei','Needs Improvement','Weak in Listening (supervisor evaluation).','Weak in Listening.'),
+               stu('Selen Nasiri Razi','Needs Improvement','Weak in Listening (supervisor evaluation).','Weak in Listening.') ],
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'Nasim Jiriaei: Weak in Listening.\nSelen Nasiri Razi: Weak in Listening.',
+      followUpActions:'Provide Listening support for Nasim Jiriaei and Selen Nasiri Razi.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  // 6. Mahdis Shah Mohammadi — On-site
+  S.push(cls({ teacher:'Mahdis Shah Mohammadi', level:'ADC11', time:T, schedule:'sun', format:'inperson',
+    declaredStudents:11,
+    students:[ stu('Nazanin Fatemeh Larni','Needs Improvement','Weak in Speaking and Listening.','Weak in Speaking and Listening.'),
+               stu('Mahya Hatefi','Needs Improvement','Weak in Speaking and Listening.','Weak in Speaking and Listening.') ],
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'Nazanin Fatemeh Larni: Weak in Speaking and Listening.\nMahya Hatefi: Weak in Speaking and Listening.' },
+    teacherFeedback:{ text:'Nazanin Fatemeh Larni: Weak in Speaking and Listening.\nMahya Hatefi: Weak in Speaking and Listening.' } }));
+
+  // 7. Fatemeh Zahra Jafari — On-site
+  const jafariNames = ['Khadijeh Ebrahimi','Narges Aslani','Mobina Giv','Hasti Mirzaei'];
+  S.push(cls({ teacher:'Fatemeh Zahra Jafari', level:'B2', time:T, schedule:'sun', format:'inperson',
+    declaredStudents:11,
+    students: jafariNames.map(n => stu(n,'Needs Improvement','Weak in Lecture and Listening (supervisor evaluation).' + (['Khadijeh Ebrahimi','Narges Aslani'].includes(n) ? ' Teacher evaluation: Weak in Lecture and Listening.' : ''),'Weak in Lecture and Listening.')),
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'Khadijeh Ebrahimi: Weak in Lecture and Listening.\nNarges Aslani: Weak in Lecture and Listening.\nMobina Giv: Weak in Lecture and Listening.\nHasti Mirzaei: Weak in Lecture and Listening.' },
+    teacherFeedback:{ text:'Khadijeh Ebrahimi: Weak in Lecture and Listening.\nNarges Aslani: Weak in Lecture and Listening.' } }));
+
+  // 8. Atefeh Mousakhani — T8 On-site
+  const t8names = ['Kimia Karami','Baran Mehri','Dina Alikbar','Nila Moradi'];
+  S.push(cls({ teacher:'Atefeh Mousakhani', level:'T8', time:T, schedule:'sun', format:'inperson',
+    declaredStudents:7,
+    students: t8names.map(n => stu(n,'Needs Improvement','Needs to make more effort to improve Speaking.','Needs to make more effort to improve Speaking.')),
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:t8names.map(n => n + ': Needs to make more effort to improve Speaking.').join('\n') },
+    teacherFeedback:{ text:t8names.map(n => n + ': Needs to make more effort to improve Speaking.').join('\n') } }));
+
+  // 9. Hadiseh Khavari — On-site
+  S.push(cls({ teacher:'Hadiseh Khavari', level:'ADC12', time:T, schedule:'sun', format:'inperson',
+    declaredStudents:12,
+    students:[ stu('Hananeh Torabi','Needs Improvement','Needs to make more effort to improve Speaking (teacher evaluation).','Needs to make more effort to improve Speaking.'),
+               stu('Mahya Shahmaleki','Needs Improvement','Needs to make more effort to improve Speaking (teacher evaluation).','Needs to make more effort to improve Speaking.'),
+               stu('Roza Dehghani','Needs Improvement','Needs to make more effort to improve Speaking (teacher evaluation).','Needs to make more effort to improve Speaking.') ],
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'The class needs to make more effort to improve their Speaking skills.',
+      followUpActions:'Overall class Speaking improvement; individual Speaking support for Hananeh Torabi, Mahya Shahmaleki and Roza Dehghani.' },
+    teacherFeedback:{ text:'1. Hananeh Torabi: Needs to make more effort to improve Speaking.\n2. Mahya Shahmaleki: Needs to make more effort to improve Speaking.\n3. Roza Dehghani: Needs to make more effort to improve Speaking.' } }));
+
+  // 10. Hanieh Pirzad — format not stated
+  S.push(cls({ teacher:'Hanieh Pirzad', level:'IELTS 1', time:T, schedule:'sun', format:'',
+    declaredStudents:9,
+    supervisorFeedback:{ status:'Satisfactory', detailedNotes:'No weak students identified.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  // 11. Nazanin Zahra Roghaye — On-site
+  S.push(cls({ teacher:'Nazanin Zahra Roghaye', level:'ADC6', time:T, schedule:'sun', format:'inperson',
+    declaredStudents:9,
+    supervisorFeedback:{ status:'Satisfactory', detailedNotes:'No weak students identified.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  // 12. Elaheh Pakro — On-site
+  S.push(cls({ teacher:'Elaheh Pakro', level:'PI2', time:T, schedule:'sun', format:'inperson',
+    declaredStudents:6,
+    students:[ stu('Helia Keshavarz','Needs Improvement','Advised to register for Level Up but has not registered yet; homework not completed; speaks Persian in class.','Advised to register for Level Up; not yet registered.'),
+               stu('Hasna Ghasham Ghazvini','Needs Improvement','Advised to register for Level Up but has not registered yet; homework not completed; speaks Persian in class.','Advised to register for Level Up; not yet registered.') ],
+    supervisorFeedback:{ status:'Requires Improvement', detailedNotes:'Not provided.' },
+    teacherFeedback:{ text:'Helia Keshavarz and Hasna Ghasham Ghazvini were advised to register for Level Up, but they have not registered yet. They have not completed their homework and speak Persian in class.' } }));
+
+  /* Saturdays and Every Other Day — 19:00 */
+  const TS = '19:00';
+
+  // On-site
+  F.push(cls({ teacher:'Atefeh Mousakhani', level:'ADC3', time:TS, schedule:'sat', format:'inperson',
+    declaredStudents:13,
+    supervisorFeedback:{ status:'Satisfactory', detailedNotes:'All students performed well.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  F.push(cls({ teacher:'Mina Behnamfar', level:'E1', time:TS, schedule:'sat', format:'inperson',
+    declaredStudents:14,
+    students:[ stu('Selena Iranmanesh','Needs Improvement','Weak in Lecture and Listening (supervisor). Teacher: needs to make considerably more effort to improve Speaking.','Weak in Lecture and Listening.'),
+               stu('Mozhan Lak','Needs Improvement','Weak in Speaking and Listening (supervisor). Teacher: needs to make more effort to improve Speaking.','Weak in Speaking and Listening.'),
+               stu('Sana Farid','Needs Improvement','Weak in Speaking (supervisor evaluation).','Weak in Speaking.'),
+               stu('Parnia Arjmandzadeh','Needs Improvement','Weak in Speaking (supervisor evaluation).','Weak in Speaking.') ],
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'Selena Iranmanesh: Weak in Lecture and Listening.\nMozhan Lak: Weak in Speaking and Listening.\nSana Farid: Weak in Speaking.\nParnia Arjmandzadeh: Weak in Speaking.' },
+    teacherFeedback:{ text:'Selena Iranmanesh: Needs to make considerably more effort to improve Speaking.\nMozhan Lak: Needs to make more effort to improve Speaking.' } }));
+
+  F.push(cls({ teacher:'Sara Hajian', level:'PI3', time:TS, schedule:'sat', format:'inperson',
+    declaredStudents:7,
+    students:[ stu('Roghaye Karamifard','Needs Improvement','Weak in Speaking and Listening (supervisor evaluation).','Weak in Speaking and Listening.'),
+               stu('Elnaz Ganji','Needs Improvement','Weak in Speaking and Listening (supervisor). Identified as a weak student by the teacher.','Weak in Speaking and Listening.') ],
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'Roghaye Karamifard: Weak in Speaking and Listening.\nElnaz Ganji: Weak in Speaking and Listening.' },
+    teacherFeedback:{ text:'Elnaz Ganji: Identified as a weak student.' } }));
+
+  F.push(cls({ teacher:'Fatemeh Matin Rad', level:'', time:TS, schedule:'sat', format:'inperson',
+    declaredStudents:5,
+    supervisorFeedback:{ status:'Satisfactory', detailedNotes:'No weak students identified.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  // Online
+  F.push(cls({ teacher:'Nazanin Bagheridoust', level:'CPE3', time:TS, schedule:'sat', format:'online',
+    declaredStudents:14,
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'No significantly weak students identified. Additional observation: some students need to work on improving their Speaking skills.',
+      followUpActions:'Provide additional Speaking practice for students who need improvement.' },
+    teacherFeedback:{ text:'No significantly weak students identified.' } }));
+
+  F.push(cls({ teacher:'Fatemeh Ghafari', level:'PI3', time:TS, schedule:'sat', format:'online',
+    declaredStudents:8,
+    students:[ stu('Fatemeh Arjmandzadeh','Needs Improvement','Needs to make more effort to improve Listening (supervisor evaluation).','Needs more effort in Listening.'),
+               stu('Fatemeh Jafari','Needs Improvement','Needs to make more effort to improve Listening (supervisor evaluation).','Needs more effort in Listening.'),
+               stu('Sajedeh Seadat','Needs Improvement','Needs to make more effort to improve Listening (supervisor evaluation).','Needs more effort in Listening.') ],
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'Fatemeh Arjmandzadeh: Needs to make more effort to improve Listening.\nFatemeh Jafari: Needs to make more effort to improve Listening.\nSajedeh Seadat: Needs to make more effort to improve Listening.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  F.push(cls({ teacher:'Zohreh Keshavarz', level:'UI2', time:TS, schedule:'sat', format:'online',
+    students:[ stu('Kimia Zandieh','Needs Improvement','Weak in Speaking (teacher evaluation).','Weak in Speaking (teacher evaluation).') ],
+    supervisorFeedback:{ status:'Reassessment Needed', detailedNotes:'Not provided.' },
+    teacherFeedback:{ text:'Kimia Zandieh: Weak in Speaking.' } }));
+
+  F.push(cls({ teacher:'Narges Javadi', level:'I2', time:TS, schedule:'sat', format:'online',
+    declaredStudents:8,
+    supervisorFeedback:{ status:'Satisfactory', detailedNotes:'Students were assessed, and all performed well.' },
+    teacherFeedback:{ text:'' } }));
+
+  F.push(cls({ teacher:'Maryam Rahgosha', level:'PI5', time:TS, schedule:'sat', format:'online',
+    declaredStudents:7,
+    students:[ stu('Armita Bahrami','Needs Improvement','Needs to make more effort to improve Speaking (supervisor evaluation).','Needs more effort in Speaking.'),
+               stu('Avin Abbasi','Needs Improvement','Needs to make more effort to improve Speaking (supervisor evaluation).','Needs more effort in Speaking.'),
+               stu('Reyhaneh Rahimi','Needs Improvement','Needs to make more effort to improve Speaking (supervisor evaluation).','Needs more effort in Speaking.') ],
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'Armita Bahrami: Needs to make more effort to improve Speaking.\nAvin Abbasi: Needs to make more effort to improve Speaking.\nReyhaneh Rahimi: Needs to make more effort to improve Speaking.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  F.push(cls({ teacher:'Ghazal Heydari', level:'PI1', time:TS, schedule:'sat', format:'online',
+    declaredStudents:15,
+    supervisorFeedback:{ status:'Satisfactory', detailedNotes:'No weak students identified.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  F.push(cls({ teacher:'Aghaseyed Ali', level:'ADC14', time:TS, schedule:'sat', format:'online',
+    supervisorFeedback:{ status:'Needs Follow-Up', detailedNotes:'Students were assessed in Listening and Topic discussion. No students were found to have serious difficulties. Additional observation: the students reported that the teacher seemed tired and lacked energy during the class.',
+      followUpActions:'Follow up with the teacher regarding classroom energy and student engagement.' },
+    teacherFeedback:{ text:'' } }));
+
+  F.push(cls({ teacher:'Mahdis Mami vandi', level:'ADC1', time:TS, schedule:'sat', format:'online',
+    declaredStudents:5,
+    supervisorFeedback:{ status:'Satisfactory', detailedNotes:'No weak students identified.' },
+    teacherFeedback:{ text:'No weak students identified.' } }));
+
+  DEFAULT_DATA.classes = S.concat(F);
+
+  /* ---------- Follow-up items ---------- */
+  const byTeacher = name => DEFAULT_DATA.classes.find(c => c.teacher === name);
+  function fu(teacherName, desc, prio, status, due){
+    const c = byTeacher(teacherName);
+    return { id: uid(), classId: c ? c.id : '', teacher: teacherName || '', description: desc,
+             priority: prio || 'Medium', status: status || 'Pending', dueDate: due || '' };
+  }
+  DEFAULT_DATA.followUps = [
+    fu('Tayebeh Hosseini','Provide intensive Speaking support for the 8 identified T9 students; continue combined Listening and Speaking support for Hana Fazeli Nia.','High'),
+    fu('Leili Rahnama','Provide Listening support for Nasim Jiriaei and Selen Nasiri Razi (ADC9).','Medium'),
+    fu('Mahdis Shah Mohammadi','Provide Speaking and Listening support for Nazanin Fatemeh Larni and Mahya Hatefi (ADC11).','Medium'),
+    fu('Fatemeh Zahra Jafari','Support the 4 students weak in Lecture and Listening: Khadijeh Ebrahimi, Narges Aslani, Mobina Giv, Hasti Mirzaei (B2).','Medium'),
+    fu('Atefeh Mousakhani','Speaking improvement plan for Kimia Karami, Baran Mehri, Dina Alikbar and Nila Moradi (T8).','Medium'),
+    fu('Hadiseh Khavari','Speaking improvement for Hananeh Torabi, Mahya Shahmaleki and Roza Dehghani; overall class Speaking effort (ADC12).','Medium'),
+    fu('Elaheh Pakro','Remind Helia Keshavarz and Hasna Ghasham Ghazvini to register for Level Up; monitor homework completion and English-only language use in class (PI2).','High'),
+    fu('','General: provide additional practice activities and monitor the progress of students with Speaking and Listening difficulties.','Medium'),
+    fu('','General: follow up with students who have not completed their homework.','Low'),
+    fu('Mina Behnamfar','Speaking and Listening support for Selena Iranmanesh, Mozhan Lak, Sana Farid and Parnia Arjmandzadeh (E1).','Medium'),
+    fu('Sara Hajian','Speaking and Listening support for Roghaye Karamifard and Elnaz Ganji (PI3).','Medium'),
+    fu('Fatemeh Ghafari','Listening improvement plan for Fatemeh Arjmandzadeh, Fatemeh Jafari and Sajedeh Seadat (PI3).','Medium'),
+    fu('Zohreh Keshavarz','Supervisor evaluation not provided — schedule an observation visit. Speaking support for Kimia Zandieh (UI2).','Medium'),
+    fu('Maryam Rahgosha','Speaking improvement plan for Armita Bahrami, Avin Abbasi and Reyhaneh Rahimi (PI5).','Medium'),
+    fu('Nazanin Bagheridoust','Provide additional Speaking practice for students who need improvement (CPE3).','Medium'),
+    fu('Aghaseyed Ali','Follow up with the teacher regarding classroom energy and student engagement (ADC14).','High'),
+    fu('','General (Saturday classes): provide additional Speaking practice for students who need improvement.','Low'),
+    fu('','General (Saturday classes): focus on Listening practice for students identified by the supervisor.','Low')
+  ];
+})();
+
+/* ============================================================
+   State & persistence
+   ============================================================ */
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return JSON.parse(JSON.stringify(DEFAULT_DATA));
+    const data = JSON.parse(raw);
+    if(!data || !Array.isArray(data.classes) || !Array.isArray(data.followUps)) throw new Error('bad shape');
+    return data;
+  }catch(e){ return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+}
+let state = loadState();
+const expanded = new Set();
+const filters = { q:'', teacher:'', level:'', schedule:'', format:'', eval:'', fuOnly:false, sort:'time' };
+let activeCat = 'all';
+
+let saveTimer = null;
+function persist(immediate){
+  clearTimeout(saveTimer);
+  const doSave = () => {
+    try{
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      const el = document.getElementById('saveText');
+      if(el) el.textContent = 'All changes saved · ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    }catch(e){ toast('⚠️ Could not save — browser storage unavailable'); }
+  };
+  if(immediate){ doSave(); } else { saveTimer = setTimeout(doSave, 450); }
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.innerHTML = esc(msg);
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ============================================================
+   Helpers
+   ============================================================ */
+function catOf(c){ return (c.schedule && c.format) ? c.schedule + '-' + c.format : null; }
+function catInfo(id){ return CATEGORIES.find(c => c.id === id); }
+function classById(id){ return state.classes.find(c => c.id === id); }
+function studentCount(c){
+  const n = (c.students || []).length;
+  if(c.declaredStudents && c.declaredStudents > n) return n + ' <span style="color:var(--muted);font-size:.75em">(reported ' + c.declaredStudents + ')</span>';
+  return String(n);
+}
+function studentTotalForStats(c){ return Math.max((c.students||[]).length, c.declaredStudents || 0); }
+function needsSupportCount(c){ return (c.students||[]).filter(s => s.status === 'Needs Improvement').length; }
+function openFollowUpsFor(classId){
+  return state.followUps.filter(f => f.classId === classId && f.status !== 'Completed');
+}
+function classNeedsFollowUp(c){
+  const ev = c.supervisorFeedback && c.supervisorFeedback.status;
+  if(ev && ev !== 'Satisfactory') return true;
+  return openFollowUpsFor(c.id).length > 0;
+}
+function initials(name){
+  const parts = String(name||'').trim().split(/\s+/);
+  return ((parts[0]||'?')[0] + (parts.length>1 ? parts[parts.length-1][0] : '')).toUpperCase();
+}
+function avatarColors(name){
+  let h = 0; for(const ch of String(name||'')) h = (h*31 + ch.charCodeAt(0)) % 360;
+  return ['hsl(' + h + ',55%,52%)','hsl(' + ((h+45)%360) + ',55%,42%)'];
+}
+function allTeachers(){ return [...new Set(state.classes.map(c => c.teacher).filter(Boolean))].sort(); }
+function allLevels(){ return [...new Set(state.classes.map(c => c.level).filter(Boolean))].sort(); }
+
+/* ============================================================
+   Rendering: Dashboard statistics
+   ============================================================ */
+function renderStats(){
+  const cs = state.classes;
+  const totalStudents = cs.reduce((a,c) => a + studentTotalForStats(c), 0);
+  const ip = cs.filter(c => c.format === 'inperson').length;
+  const on = cs.filter(c => c.format === 'online').length;
+  const sat = cs.filter(c => c.schedule === 'sat').length;
+  const sun = cs.filter(c => c.schedule === 'sun').length;
+  const fu = cs.filter(classNeedsFollowUp).length;
+  const stats = [
+    { icon:'🏫', num: cs.length, lbl:'Total Number of Classes', glow:'rgba(91,140,255,.3)' },
+    { icon:'👥', num: totalStudents, lbl:'Total Number of Students', glow:'rgba(185,168,245,.32)' },
+    { icon:'📍', num: ip, lbl:'Total In-Person Classes', glow:'rgba(67,217,163,.3)' },
+    { icon:'🖥️', num: on, lbl:'Total Online Classes', glow:'rgba(110,168,255,.3)' },
+    { icon:'🗓️', num: sat, lbl:'Classes on Saturdays and Every Other Day', glow:'rgba(255,200,87,.28)' },
+    { icon:'🗓️', num: sun, lbl:'Classes on Sundays and Every Other Day', glow:'rgba(255,123,138,.26)' },
+    { icon:'👩‍🏫', num: allTeachers().length, lbl:'Total Teachers', glow:'rgba(143,126,224,.3)' },
+    { icon:'🚩', num: fu, lbl:'Classes Requiring Follow-Up', glow:'rgba(255,123,138,.32)' }
+  ];
+  document.getElementById('statsGrid').innerHTML = stats.map(s =>
+    '<div class="stat" style="--glow:' + s.glow + '"><div class="icon">' + s.icon + '</div><div class="num">' + s.num + '</div><div class="lbl">' + s.lbl + '</div></div>'
+  ).join('');
+
+  // chart
+  const max = Math.max(1, ...CATEGORIES.map(cat => cs.filter(c => catOf(c) === cat.id).length));
+  document.getElementById('chartBars').innerHTML = CATEGORIES.map(cat => {
+    const n = cs.filter(c => catOf(c) === cat.id).length;
+    return '<div class="bar-row"><span>' + cat.icon + ' ' + cat.label + '</span>' +
+      '<div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,' + cat.accent + ',' + cat.accent + '99);width:' + (n/max*100) + '%"></div></div>' +
+      '<span class="bar-count">' + n + '</span></div>';
+  }).join('') + (cs.some(c => !catOf(c)) ?
+    '<div class="bar-row"><span>⚠️ Awaiting Schedule / Format Information</span><div class="bar-track"><div class="bar-fill" style="background:repeating-linear-gradient(45deg,#ffc857,#ffc857 6px,#b8860b 6px,#b8860b 12px);width:' + (cs.filter(c=>!catOf(c)).length/max*100) + '%"></div></div><span class="bar-count">' + cs.filter(c=>!catOf(c)).length + '</span></div>' : '');
+
+  // teachers overview
+  document.getElementById('teacherCountSub').textContent = allTeachers().length + ' teachers currently teaching across all classes.';
+  document.getElementById('teacherList').innerHTML = allTeachers().map(t => {
+    const n = cs.filter(c => c.teacher === t).length;
+    return '<span class="chip" style="padding:7px 14px;font-size:.82rem">👩‍🏫 ' + esc(t) + ' · ' + n + ' class' + (n>1?'es':'') + '</span>';
+  }).join('') || '<span class="empty-note">No teachers added yet.</span>';
+}
+
+/* ============================================================
+   Rendering: Category tabs + class list
+   ============================================================ */
+function renderCatTabs(){
+  const counts = { all: state.classes.length, unassigned: state.classes.filter(c => !catOf(c)).length };
+  CATEGORIES.forEach(cat => counts[cat.id] = state.classes.filter(c => catOf(c) === cat.id).length);
+  let html = '<button data-cat="all" class="' + (activeCat==='all'?'active':'') + '" style="--accent:#5b8cff"><span class="ct-title">📚 All Classes</span><span class="ct-count">' + counts.all + ' classes</span></button>';
+  CATEGORIES.forEach(cat => {
+    html += '<button data-cat="' + cat.id + '" class="' + (activeCat===cat.id?'active':'') + '" style="--accent:' + cat.accent + '">' +
+      '<span class="ct-title">' + cat.icon + ' ' + cat.short + '</span><span class="ct-count">' + counts[cat.id] + ' classes</span></button>';
+  });
+  html += '<button data-cat="unassigned" class="' + (activeCat==='unassigned'?'active':'') + '" style="--accent:#ffc857"><span class="ct-title">⚠️ Unassigned</span><span class="ct-count">' + counts.unassigned + ' need schedule/format</span></button>';
+  document.getElementById('catTabs').innerHTML = html;
+}
+
+function passesFilters(c){
+  const q = filters.q.trim().toLowerCase();
+  if(filters.teacher && c.teacher !== filters.teacher) return false;
+  if(filters.level && c.level !== filters.level) return false;
+  if(filters.schedule && c.schedule !== filters.schedule) return false;
+  if(filters.format && c.format !== filters.format) return false;
+  if(filters.eval){
+    const ev = (c.supervisorFeedback && c.supervisorFeedback.status) || '';
+    if(filters.eval === 'Not Evaluated'){ if(ev) return false; }
+    else if(ev !== filters.eval) return false;
+  }
+  if(filters.fuOnly && !classNeedsFollowUp(c)) return false;
+  if(q){
+    const hay = [c.teacher, c.level, c.notes, c.time,
+      (c.supervisorFeedback||{}).detailedNotes, (c.teacherFeedback||{}).text,
+      ...(c.students||[]).map(s => s.name + ' ' + s.notes + ' ' + s.observation)
+    ].join(' ').toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function filteredClasses(){
+  let list = state.classes.filter(passesFilters);
+  if(activeCat !== 'all'){
+    if(activeCat === 'unassigned') list = list.filter(c => !catOf(c));
+    else list = list.filter(c => catOf(c) === activeCat);
+  }
+  const key = filters.sort;
+  list.sort((a,b) => {
+    if(key === 'teacher') return (a.teacher||'').localeCompare(b.teacher||'');
+    if(key === 'level')   return (a.level||'').localeCompare(b.level||'', undefined, {numeric:true});
+    return (a.time||'').localeCompare(b.time||'') || (a.teacher||'').localeCompare(b.teacher||'');
+  });
+  return list;
+}
+
+function evalChip(c){
+  const ev = (c.supervisorFeedback && c.supervisorFeedback.status) || '';
+  if(!ev) return '';
+  const cls = ev === 'Satisfactory' ? 'good' : (ev === 'Needs Follow-Up' ? 'warn' : 'bad');
+  return '<span class="chip ' + cls + '">◉ ' + ev + '</span>';
+}
+
+function classCardHTML(c){
+  const cat = catOf(c);
+  const open = expanded.has(c.id);
+  const [a1,a2] = avatarColors(c.teacher);
+  const support = needsSupportCount(c);
+  const openFUs = openFollowUpsFor(c.id);
+  const flag = classNeedsFollowUp(c);
+  const schLabel = c.schedule ? SCHEDULE_LABEL[c.schedule] : 'Schedule not set';
+  const fmtLabel = c.format ? FORMAT_LABEL[c.format] : 'Format not set';
+  const chips =
+    (c.level ? '<span class="chip level">' + esc(c.level) + '</span>' : '<span class="chip">Level: —</span>') +
+    (c.time ? '<span class="chip">🕒 ' + esc(c.time) + '</span>' : '') +
+    '<span class="chip">👥 Students: ' + studentCount(c) + '</span>' +
+    '<span class="chip">🗓️ ' + esc(schLabel) + '</span>' +
+    (c.format ? '<span class="chip ' + (c.format==='online'?'fmt-on':'fmt-ip') + '">' + (c.format==='online'?'🖥️ Online':'🏫 In-Person') + '</span>' : '<span class="chip warn">⚠️ ' + esc(fmtLabel) + '</span>') +
+    evalChip(c) +
+    (support ? '<span class="chip bad">🆘 ' + support + ' need support</span>' : '') +
+    (openFUs.length ? '<span class="chip warn">📌 ' + openFUs.length + ' open follow-up' + (openFUs.length>1?'s':'') + '</span>' : '');
+
+  const supF = c.supervisorFeedback || {};
+  const tf = c.teacherFeedback || {};
+  const sRow = (s,i) =>
+    '<div class="student-row" data-sid="' + s.id + '">' +
+      '<span class="idx">' + (i+1) + '</span>' +
+      '<input type="text" value="' + esc(s.name) + '" data-stu-field="name" aria-label="Student name">' +
+      '<select class="status-sel" data-stu-field="status" aria-label="Performance status">' +
+        '<option value="">— Status —</option>' + STATUSES.map(x => '<option' + (s.status===x?' selected':'') + '>' + x + '</option>').join('') + '</select>' +
+      '<input type="text" value="' + esc(s.notes) + '" data-stu-field="notes" placeholder="Notes / difficulties / follow-up…" aria-label="Student notes">' +
+      '<span style="display:flex;gap:6px;align-items:center">' + (s.status === 'Needs Improvement' ? '<span class="support-tag">Support</span>' : '') +
+      '<button class="btn btn-danger btn-sm row-del" data-act="del-stu" title="Remove student">✕</button></span>' +
+    '</div>';
+
+  return '<article class="class-card' + (open?' open':'') + (flag?' flag':'') + '" data-cid="' + c.id + '">' +
+  '<button class="card-head" data-act="toggle" aria-expanded="' + open + '">' +
+    '<span class="teacher-avatar" style="--av1:' + a1 + ';--av2:' + a2 + '">' + esc(initials(c.teacher)) + '</span>' +
+    '<span><span class="t-name">' + esc(c.teacher || 'Unnamed teacher') + '</span><span class="t-meta">' + chips + '</span></span>' +
+    '<span class="expand-ic">▾</span>' +
+  '</button>' +
+  '<div class="card-body">' +
+    '<div class="mini-stats">' +
+      '<span>Students listed: <b>' + (c.students||[]).length + '</b></span>' +
+      (c.declaredStudents ? '<span>Reported total: <b>' + c.declaredStudents + '</b></span>' : '') +
+      '<span>Need support: <b>' + support + '</b></span>' +
+      '<span>Open follow-ups: <b>' + openFUs.length + '</b></span>' +
+    '</div>' +
+
+    '<div class="detail-box" style="margin-bottom:14px">' +
+      '<h4>👥 Students <span style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:400">(editable inline — changes save automatically)</span></h4>' +
+      ((c.students||[]).length
+        ? '<div style="margin-bottom:8px">' + c.students.map(sRow).join('') + '</div>'
+        : '<div class="empty-note">No students added yet. Add the student list below.</div>') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
+        '<input type="text" id="newStu-' + c.id + '" placeholder="New student name…" style="flex:1;min-width:180px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--line)">' +
+        '<button class="btn btn-ghost btn-sm" data-act="add-stu">＋ Add Student</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="detail-grid">' +
+      '<div class="detail-box teacher-box">' +
+        '<h4>📝 Teacher&#39;s Feedback</h4>' +
+        '<div class="field"><label>Feedback Date (optional)</label><input type="date" data-tf="date" value="' + esc(tf.date||'') + '"></div>' +
+        '<div class="field"><label>Comments on teaching methods, classroom management, participation, lesson delivery, progress, atmosphere, strengths and areas for improvement</label>' +
+        '<textarea data-tf="text" placeholder="Teacher&#39;s comments and classroom observations…">' + esc(tf.text||'') + '</textarea></div>' +
+        '<button class="btn btn-primary btn-sm" data-act="save-tf">💾 Save Teacher&#39;s Feedback</button>' +
+      '</div>' +
+      '<div class="detail-box sup-box">' +
+        '<h4>🛡️ Supervisor&#39;s Feedback &amp; Evaluation</h4>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">' +
+          '<div class="field"><label>Evaluation Status</label><select data-sf="status"><option value="">— Select —</option>' +
+            EVAL_STATUSES.map(x => '<option' + (supF.status===x?' selected':'') + '>' + x + '</option>').join('') + '</select></div>' +
+          '<div class="field"><label>Evaluation Date</label><input type="date" data-sf="date" value="' + esc(supF.date||'') + '"></div>' +
+        '</div>' +
+        '<div class="field"><label>Overall Classroom Performance</label><input type="text" data-sf="overall" value="' + esc(supF.overall||'') + '"></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+          '<div class="field"><label>Teaching Quality</label><input type="text" data-sf="teachingQuality" value="' + esc(supF.teachingQuality||'') + '"></div>' +
+          '<div class="field"><label>Classroom Management</label><input type="text" data-sf="classroomManagement" value="' + esc(supF.classroomManagement||'') + '"></div>' +
+          '<div class="field"><label>Student Engagement</label><input type="text" data-sf="studentEngagement" value="' + esc(supF.studentEngagement||'') + '"></div>' +
+          '<div class="field"><label>Lesson Plan Implementation</label><input type="text" data-sf="lessonPlan" value="' + esc(supF.lessonPlan||'') + '"></div>' +
+        '</div>' +
+        '<div class="field"><label>Strengths</label><input type="text" data-sf="strengths" value="' + esc(supF.strengths||'') + '"></div>' +
+        '<div class="field"><label>Weaknesses</label><input type="text" data-sf="weaknesses" value="' + esc(supF.weaknesses||'') + '"></div>' +
+        '<div class="field"><label>Areas for Improvement</label><input type="text" data-sf="improvements" value="' + esc(supF.improvements||'') + '"></div>' +
+        '<div class="field"><label>Recommendations</label><input type="text" data-sf="recommendations" value="' + esc(supF.recommendations||'') + '"></div>' +
+        '<div class="field"><label>Required Follow-Up Actions</label><input type="text" data-sf="followUpActions" value="' + esc(supF.followUpActions||'') + '"></div>' +
+        '<div class="field"><label>Detailed Supervisor Observations</label><textarea data-sf="detailedNotes" placeholder="Detailed classroom observation notes…">' + esc(supF.detailedNotes||'') + '</textarea></div>' +
+        '<button class="btn btn-primary btn-sm" data-act="save-sf">💾 Save Supervisor&#39;s Feedback</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="detail-box" style="margin-top:16px">' +
+      '<h4>📋 Class Notes &amp; Classroom Performance</h4>' +
+      '<textarea data-class-field="notes" placeholder="General notes, classroom performance notes, follow-up actions and recommendations…">' + esc(c.notes||'') + '</textarea>' +
+    '</div>' +
+
+    '<div class="card-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
+      '<button class="btn btn-ghost btn-sm no-print" data-act="edit-class">✏️ Edit Class</button>' +
+      '<button class="btn btn-ghost btn-sm no-print" data-act="print-class">🖨️ Print Class</button>' +
+      '<button class="btn btn-danger btn-sm no-print" data-act="del-class">🗑 Delete Class</button>' +
+    '</div>' +
+  '</div></article>';
+}
+
+function renderClasses(){
+  renderCatTabs();
+  // refresh filter dropdowns
+  const ft = document.getElementById('fTeacher');
+  const curT = ft.value;
+  ft.innerHTML = '<option value="">All Teachers</option>' + allTeachers().map(t => '<option' + (t===curT?' selected':'') + '>' + esc(t) + '</option>').join('');
+  const fl = document.getElementById('fLevel');
+  const curL = fl.value;
+  fl.innerHTML = '<option value="">All Levels</option>' + allLevels().map(l => '<option' + (l===curL?' selected':'') + '>' + esc(l) + '</option>').join('');
+
+  const list = filteredClasses();
+  document.getElementById('classList').innerHTML = list.map(classCardHTML).join('');
+  document.getElementById('classesEmpty').style.display = list.length ? 'none' : 'block';
+
+  // unassigned banner
+  const un = state.classes.filter(c => !catOf(c));
+  document.getElementById('unassignedBox').innerHTML = (un.length && activeCat !== 'unassigned') ?
+    '<div class="unassigned"><h3>⚠️ ' + un.length + ' class' + (un.length>1?'es':'') + ' awaiting schedule / format information</h3>' +
+    '<p style="font-size:.85rem;color:#c3d1ee">' + un.map(c => esc(c.teacher)).join(', ') +
+    ' — these classes are not shown in the four schedule categories. Use Edit Class to set the schedule category and format.</p>' +
+    '<button class="btn btn-ghost btn-sm" data-cat="unassigned" style="margin-top:8px">View Unassigned Classes</button></div>' : '';
+
+  // highlight student search matches
+  const q = filters.q.trim().toLowerCase();
+  if(q){
+    list.forEach(c => {
+      const hit = (c.students||[]).some(s => s.name.toLowerCase().includes(q));
+      if(hit && !expanded.has(c.id)){ expanded.add(c.id); renderClasses(); return; }
+    });
+    document.querySelectorAll('#classList .student-row').forEach(row => {
+      const inp = row.querySelector('input[data-stu-field="name"]');
+      if(inp && inp.value.toLowerCase().includes(q)) row.classList.add('hl');
+    });
+  }
+}
+
+function renderFollowUps(){
+  const fq = (document.getElementById('fuSearch').value || '').toLowerCase();
+  const fs = document.getElementById('fuFilterStatus').value;
+  const fp = document.getElementById('fuFilterPrio').value;
+  let list = state.followUps.filter(f => {
+    if(fs && f.status !== fs) return false;
+    if(fp && f.priority !== fp) return false;
+    if(fq && !(f.description + ' ' + (f.teacher||'')).toLowerCase().includes(fq)) return false;
+    return true;
+  });
+  list.sort((a,b) => (a.status==='Completed') - (b.status==='Completed') || a.priority.localeCompare(b.priority));
+
+  const pend = state.followUps.filter(f => f.status !== 'Completed').length;
+  const done = state.followUps.filter(f => f.status === 'Completed').length;
+  const high = state.followUps.filter(f => f.status !== 'Completed' && f.priority === 'High').length;
+  document.getElementById('fuSummary').innerHTML =
+    '<span>Total: <b>' + state.followUps.length + '</b></span><span>Pending / In Progress: <b>' + pend + '</b></span>' +
+    '<span>Completed: <b>' + done + '</b></span><span style="color:var(--bad)">High priority open: <b>' + high + '</b></span>';
+
+  document.getElementById('followUpList').innerHTML = list.map(f => {
+    const c = f.classId ? classById(f.classId) : null;
+    return '<div class="fu-item' + (f.status==='Completed'?' done':'') + '" data-fid="' + f.id + '">' +
+      '<span class="fu-prio prio-' + f.priority + '">' + f.priority.toUpperCase() + '</span>' +
+      '<div><h4>' + esc(c ? c.teacher + (c.level ? ' · ' + c.level : '') : (f.teacher || 'General / Institute-wide')) + '</h4>' +
+      '<p class="fu-desc">' + esc(f.description) + '</p>' +
+      '<div class="fu-meta"><span>🏷️ ' + esc(f.status) + '</span>' + (f.dueDate ? '<span>📅 Due: ' + esc(f.dueDate) + '</span>' : '') + '</div></div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' +
+        '<button class="btn btn-ghost btn-sm" data-fu-act="status" title="Cycle status">' + (f.status==='Completed' ? '↩ Reopen' : '✔ Mark ' + (f.status==='Pending'?'In Progress':'Completed')) + '</button>' +
+        '<button class="btn btn-ghost btn-sm" data-fu-act="edit">✏️</button>' +
+        '<button class="btn btn-danger btn-sm" data-fu-act="del">✕</button>' +
+      '</div></div>';
+  }).join('');
+  document.getElementById('fuEmpty').style.display = list.length ? 'none' : 'block';
+
+  // populate class select in follow-up modal
+  const sel = document.getElementById('ffClass');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— General / Not linked to a class —</option>' +
+    state.classes.map(c => '<option value="' + c.id + '"' + (c.id===cur?' selected':'') + '>' + esc(c.teacher + (c.level ? ' · ' + c.level : '')) + '</option>').join('');
+}
+
+function renderAll(){
+  renderStats();
+  renderClasses();
+  renderFollowUps();
+}
+
+/* ============================================================
+   Modals & confirmation
+   ============================================================ */
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.modal-back').forEach(back => {
+  back.addEventListener('mousedown', e => { if(e.target === back) back.classList.remove('show'); });
+  back.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => back.classList.remove('show')));
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') document.querySelectorAll('.modal-back.show').forEach(m => m.classList.remove('show'));
+});
+let confirmCb = null;
+function askConfirm(title, msg, cb){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCb = cb;
+  openModal('confirmBack');
+}
+document.getElementById('confirmYes').addEventListener('click', () => {
+  closeModal('confirmBack');
+  if(confirmCb){ const cb = confirmCb; confirmCb = null; cb(); }
+});
+function showFormError(elId, msg){
+  const el = document.getElementById(elId);
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4200);
+}
+
+/* ============================================================
+   Navigation tabs
+   ============================================================ */
+document.querySelectorAll('nav.tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+});
+
+/* ============================================================
+   Class form (add / edit)
+   ============================================================ */
+document.getElementById('btnAddClass').addEventListener('click', () => {
+  document.getElementById('classForm').reset();
+  document.getElementById('cfId').value = '';
+  document.getElementById('classModalTitle').textContent = 'Add New Class';
+  openModal('classModalBack');
+});
+function openEditClass(c){
+  document.getElementById('classModalTitle').textContent = 'Edit Class — ' + c.teacher;
+  document.getElementById('cfId').value = c.id;
+  document.getElementById('cfTeacher').value = c.teacher;
+  document.getElementById('cfLevel').value = c.level || '';
+  document.getElementById('cfTime').value = c.time || '';
+  document.getElementById('cfSchedule').value = c.schedule || '';
+  document.getElementById('cfFormat').value = c.format || '';
+  document.getElementById('cfStudents').value = (c.students||[]).map(s => s.name).join('\n');
+  document.getElementById('cfNotes').value = c.notes || '';
+  openModal('classModalBack');
+}
+document.getElementById('classForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const teacher = document.getElementById('cfTeacher').value.trim();
+  const schedule = document.getElementById('cfSchedule').value;
+  const format = document.getElementById('cfFormat').value;
+  if(!teacher){ showFormError('classFormError', '⚠️ Teacher&#39;s name is required.'); return; }
+  if(!schedule){ showFormError('classFormError', '⚠️ Please select a schedule category so the class can be placed in the correct section.'); return; }
+  if(!format){ showFormError('classFormError', '⚠️ Please select the class format (Online or In-Person).'); return; }
+
+  const id = document.getElementById('cfId').value;
+  const level = document.getElementById('cfLevel').value.trim();
+  const time = document.getElementById('cfTime').value.trim();
+  const notes = document.getElementById('cfNotes').value.trim();
+  const names = document.getElementById('cfStudents').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  if(id){
+    const c = classById(id);
+    if(!c) return;
+    c.teacher = teacher; c.level = level; c.time = time; c.schedule = schedule; c.format = format; c.notes = notes;
+    const old = new Set((c.students||[]).map(s => s.name.toLowerCase()));
+    names.forEach(n => {
+      if(!old.has(n.toLowerCase())) c.students.push(stu(n));
+    });
+    c.students = c.students.filter(s => names.map(x => x.toLowerCase()).includes(s.name.toLowerCase()));
+    expanded.add(c.id);
+    toast('✅ Class updated');
+  } else {
+    const c = cls({ teacher, level, time, schedule, format, notes,
+      students: names.map(n => stu(n)) });
+    state.classes.push(c);
+    expanded.add(c.id);
+    toast('✅ Class added');
+  }
+  closeModal('classModalBack');
+  persist();
+  renderAll();
+});
+
+/* ============================================================
+   Class card events (delegated)
+   ============================================================ */
+document.getElementById('classList').addEventListener('click', e => {
+  const actBtn = e.target.closest('[data-act]');
+  const card = e.target.closest('.class-card');
+  if(!actBtn){
+    if(card && e.target.closest('.card-head')){ toggleCard(card.dataset.cid); }
+    return;
+  }
+  const cid = card.dataset.cid;
+  const c = classById(cid);
+  if(!c) return;
+  const act = actBtn.dataset.act;
+
+  if(act === 'toggle'){ toggleCard(cid); }
+  else if(act === 'add-stu'){
+    const inp = document.getElementById('newStu-' + cid);
+    const name = inp.value.trim();
+    if(!name){ toast('⚠️ Enter a student name first'); inp.focus(); return; }
+    c.students.push(stu(name));
+    persist(); renderAll(); keepFocus('newStu-' + cid);
+  }
+  else if(act === 'del-stu'){
+    const row = actBtn.closest('.student-row');
+    const s = c.students.find(x => x.id === row.dataset.sid);
+    askConfirm('Remove Student', 'Remove ' + (s ? s.name : 'this student') + ' from ' + c.teacher + '&#39;s class? This cannot be undone.', () => {
+      c.students = c.students.filter(x => x.id !== row.dataset.sid);
+      persist(); renderAll(); toast('🗑 Student removed');
+    });
+  }
+  else if(act === 'save-tf'){
+    saveTeacherFeedback(card, c, true);
+  }
+  else if(act === 'save-sf'){
+    saveSupervisorFeedback(card, c, true);
+  }
+  else if(act === 'edit-class'){ openEditClass(c); }
+  else if(act === 'del-class'){
+    askConfirm('Delete Class', 'Delete ' + c.teacher + '&#39;s class' + (c.level ? ' (' + c.level + ')' : '') +
+      ' with ' + c.students.length + ' students and all feedback? This cannot be undone.', () => {
+      state.classes = state.classes.filter(x => x.id !== cid);
+      state.followUps.forEach(f => { if(f.classId === cid) f.classId = ''; });
+      expanded.delete(cid);
+      persist(); renderAll(); toast('🗑 Class deleted');
+    });
+  }
+  else if(act === 'print-class'){ printReport('class', cid); }
+});
+
+function toggleCard(cid){
+  if(expanded.has(cid)) expanded.delete(cid); else expanded.add(cid);
+  renderClasses();
+}
+function keepFocus(inputId){
+  const el = document.getElementById(inputId);
+  if(el){ el.scrollIntoView({block:'nearest'}); el.focus(); }
+}
+
+/* student inline edits + feedback autosave on change */
+document.getElementById('classList').addEventListener('change', e => {
+  const card = e.target.closest('.class-card');
+  if(!card) return;
+  const c = classById(card.dataset.cid);
+  if(!c) return;
+
+  const sf = e.target.dataset.stuField;
+  if(sf){
+    const row = e.target.closest('.student-row');
+    const s = c.students.find(x => x.id === row.dataset.sid);
+    if(!s) return;
+    if(sf === 'name'){ if(!e.target.value.trim()){ toast('⚠️ Student name cannot be empty'); e.target.value = s.name; return; } s.name = e.target.value.trim(); }
+    if(sf === 'status') s.status = e.target.value;
+    if(sf === 'notes') s.notes = e.target.value;
+    persist(); renderStats(); renderFollowUps();
+    // re-render only this card to update support tags without losing scroll
+    const wrapper = card.parentElement;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = classCardHTML(c);
+    wrapper.replaceChild(tmp.firstChild, card);
+    return;
+  }
+  if(e.target.dataset.tf){
+    saveTeacherFeedback(card, c, false);
+    return;
+  }
+  if(e.target.dataset.sf){
+    saveSupervisorFeedback(card, c, false);
+    return;
+  }
+  if(e.target.dataset.classField){
+    c.notes = e.target.value;
+    persist();
+  }
+});
+document.getElementById('classList').addEventListener('input', e => {
+  if(e.target.matches('textarea[data-tf], textarea[data-sf], input[data-sf], input[data-class-field], input[data-stu-field="notes"]')){
+    // gentle autosave for text fields (debounced)
+    const card = e.target.closest('.class-card');
+    if(!card) return;
+    const c = classById(card.dataset.cid);
+    if(!c) return;
+    if(e.target.dataset.classField) c.notes = e.target.value;
+    if(e.target.dataset.stuField === 'notes'){
+      const row = e.target.closest('.student-row');
+      const s = c.students.find(x => x.id === row.dataset.sid);
+      if(s) s.notes = e.target.value;
+    }
+    persist();
+  }
+});
+
+function saveTeacherFeedback(card, c, announce){
+  card.querySelectorAll('[data-tf]').forEach(el => {
+    if(el.dataset.tf === 'text') c.teacherFeedback.text = el.value;
+    if(el.dataset.tf === 'date') c.teacherFeedback.date = el.value;
+  });
+  persist(); if(announce) toast('✅ Teacher&#39;s feedback saved');
+}
+function saveSupervisorFeedback(card, c, announce){
+  card.querySelectorAll('[data-sf]').forEach(el => { c.supervisorFeedback[el.dataset.sf] = el.value; });
+  persist(); renderStats();
+  if(announce) toast('✅ Supervisor&#39;s feedback saved');
+}
+
+/* ============================================================
+   Category tabs & filters
+   ============================================================ */
+document.getElementById('catTabs').addEventListener('click', e => {
+  const btn = e.target.closest('[data-cat]');
+  if(!btn) return;
+  activeCat = btn.dataset.cat;
+  renderClasses();
+});
+document.getElementById('unassignedBox').addEventListener('click', e => {
+  const btn = e.target.closest('[data-cat]');
+  if(!btn) return;
+  activeCat = btn.dataset.cat;
+  renderClasses();
+});
+
+const filterMap = { fSearch:'q', fTeacher:'teacher', fLevel:'level', fSchedule:'schedule', fFormat:'format', fEval:'eval' };
+Object.keys(filterMap).forEach(id => {
+  document.getElementById(id).addEventListener('input', e => {
+    filters[filterMap[id]] = e.target.value;
+    renderClasses();
+  });
+});
+document.getElementById('fSort').addEventListener('change', e => { filters.sort = e.target.value; renderClasses(); });
+document.getElementById('fFollowUp').addEventListener('change', e => { filters.fuOnly = e.target.checked; renderClasses(); });
+document.getElementById('btnResetFilters').addEventListener('click', () => {
+  Object.keys(filterMap).forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fFollowUp').checked = false;
+  document.getElementById('fSort').value = 'time';
+  Object.assign(filters, { q:'', teacher:'', level:'', schedule:'', format:'', eval:'', fuOnly:false, sort:'time' });
+  activeCat = 'all';
+  renderClasses();
+  toast('↺ Filters reset');
+});
+
+/* ============================================================
+   Follow-up items
+   ============================================================ */
+document.getElementById('btnAddFollowUp').addEventListener('click', () => {
+  document.getElementById('fuForm').reset();
+  document.getElementById('ffId').value = '';
+  document.getElementById('ffPrio').value = 'Medium';
+  document.getElementById('ffStatus').value = 'Pending';
+  document.getElementById('fuModalTitle').textContent = 'Add Follow-Up Item';
+  renderFollowUps(); // refresh class list in select
+  openModal('fuModalBack');
+});
+document.getElementById('ffClass').addEventListener('change', e => {
+  const c = classById(e.target.value);
+  document.getElementById('ffTeacher').value = c ? c.teacher : '';
+});
+document.getElementById('fuForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const desc = document.getElementById('ffDesc').value.trim();
+  if(!desc){ showFormError('fuFormError', '⚠️ Description is required.'); return; }
+  const id = document.getElementById('ffId').value;
+  const data = {
+    classId: document.getElementById('ffClass').value,
+    teacher: document.getElementById('ffTeacher').value.trim(),
+    description: desc,
+    priority: document.getElementById('ffPrio').value,
+    status: document.getElementById('ffStatus').value,
+    dueDate: document.getElementById('ffDue').value
+  };
+  if(id){
+    const f = state.followUps.find(x => x.id === id);
+    if(f) Object.assign(f, data);
+    toast('✅ Follow-up updated');
+  } else {
+    state.followUps.push(Object.assign({ id: uid() }, data));
+    toast('✅ Follow-up added');
+  }
+  closeModal('fuModalBack');
+  persist(); renderAll();
+});
+document.getElementById('fuSearch').addEventListener('input', renderFollowUps);
+document.getElementById('fuFilterStatus').addEventListener('change', renderFollowUps);
+document.getElementById('fuFilterPrio').addEventListener('change', renderFollowUps);
+
+document.getElementById('followUpList').addEventListener('click', e => {
+  const btn = e.target.closest('[data-fu-act]');
+  if(!btn) return;
+  const id = btn.closest('.fu-item').dataset.fid;
+  const f = state.followUps.find(x => x.id === id);
+  if(!f) return;
+  const act = btn.dataset.fuAct;
+  if(act === 'status'){
+    f.status = f.status === 'Pending' ? 'In Progress' : (f.status === 'In Progress' ? 'Completed' : 'Pending');
+    persist(); renderAll(); toast('🔄 Status: ' + f.status);
+  } else if(act === 'edit'){
+    renderFollowUps();
+    document.getElementById('ffId').value = f.id;
+    document.getElementById('ffClass').value = f.classId || '';
+    document.getElementById('ffTeacher').value = f.teacher || '';
+    document.getElementById('ffDesc').value = f.description;
+    document.getElementById('ffPrio').value = f.priority;
+    document.getElementById('ffStatus').value = f.status;
+    document.getElementById('ffDue').value = f.dueDate || '';
+    document.getElementById('fuModalTitle').textContent = 'Edit Follow-Up Item';
+    openModal('fuModalBack');
+  } else if(act === 'del'){
+    askConfirm('Delete Follow-Up Item', 'Delete this follow-up item? This cannot be undone.', () => {
+      state.followUps = state.followUps.filter(x => x.id !== id);
+      persist(); renderAll(); toast('🗑 Follow-up removed');
+    });
+  }
+});
+
+/* ============================================================
+   Backup / restore / CSV
+   ============================================================ */
+document.getElementById('btnManualSave').addEventListener('click', () => { persist(true); toast('💾 All data saved'); });
+document.getElementById('btnExportJson').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  downloadBlob(blob, 'supervision_backup_' + new Date().toISOString().slice(0,10) + '.json');
+  toast('📤 JSON backup downloaded');
+});
+document.getElementById('btnImportJson').addEventListener('click', () => document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      if(!data || !Array.isArray(data.classes) || !Array.isArray(data.followUps))
+        throw new Error('Invalid backup structure');
+      data.classes.forEach(c => {
+        if(!c.id || typeof c.teacher !== 'string') throw new Error('Invalid class record');
+        c.students = Array.isArray(c.students) ? c.students : [];
+        c.teacherFeedback = c.teacherFeedback || {text:'', date:''};
+        c.supervisorFeedback = Object.assign({overall:'',teachingQuality:'',classroomManagement:'',studentEngagement:'',lessonPlan:'',strengths:'',weaknesses:'',improvements:'',recommendations:'',followUpActions:'',detailedNotes:'',status:'',date:''}, c.supervisorFeedback);
+      });
+      data.meta = data.meta || {};
+      askConfirm('Import Backup', 'Replace ALL current dashboard data with the contents of "' + file.name + '"?', () => {
+        state = data;
+        expanded.clear();
+        persist(true);
+        renderAll();
+        toast('📥 Backup imported successfully');
+      });
+    }catch(err){ toast('⚠️ Import failed: ' + err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+function csvCell(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
+function downloadBlob(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+}
+document.getElementById('btnCsvClasses').addEventListener('click', () => {
+  const head = ['Teacher','Level','Time','Schedule','Format','Students (listed)','Reported Total','Needs Support','Evaluation Status','Open Follow-Ups','Notes'];
+  const rows = state.classes.map(c => [
+    c.teacher, c.level, c.time, c.schedule ? SCHEDULE_LABEL[c.schedule] : '', c.format ? FORMAT_LABEL[c.format] : '',
+    (c.students||[]).length, c.declaredStudents || '', needsSupportCount(c),
+    (c.supervisorFeedback||{}).status || '', openFollowUpsFor(c.id).length, (c.notes||'').replace(/\n/g,' ')
+  ].map(csvCell).join(','));
+  downloadBlob(new Blob(['\ufeff' + head.map(csvCell).join(',') + '\n' + rows.join('\n')], {type:'text/csv'}),
+    'classes_' + new Date().toISOString().slice(0,10) + '.csv');
+  toast('📑 Classes CSV downloaded');
+});
+document.getElementById('btnCsvStudents').addEventListener('click', () => {
+  const head = ['Teacher','Level','Schedule','Format','Student Name','Status','Needs Support','Notes'];
+  const rows = [];
+  state.classes.forEach(c => (c.students||[]).forEach(s => rows.push([
+    c.teacher, c.level, c.schedule ? SCHEDULE_LABEL[c.schedule] : '', c.format ? FORMAT_LABEL[c.format] : '',
+    s.name, s.status || '', s.status === 'Needs Improvement' ? 'Yes' : '', (s.notes||'').replace(/\n/g,' ')
+  ].map(csvCell).join(','))));
+  downloadBlob(new Blob(['\ufeff' + head.map(csvCell).join(',') + '\n' + rows.join('\n')], {type:'text/csv'}),
+    'students_' + new Date().toISOString().slice(0,10) + '.csv');
+  toast('📑 Students CSV downloaded');
+});
+document.getElementById('btnResetAll').addEventListener('click', () => {
+  askConfirm('Reset All Data', 'Permanently delete all current data and restore the original starting data? Export a JSON backup first if needed.', () => {
+    state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    expanded.clear();
+    persist(true);
+    renderAll();
+    toast('🗑 Data reset to starting state');
+  });
+});
+
+/* ============================================================
+   Printing
+   ============================================================ */
+function printHeader(title){
+  return '<div style="border-bottom:3px solid #0b1f3f;padding-bottom:10px;margin-bottom:18px">' +
+    '<h1 style="font-size:1.5rem;color:#0b1f3f">🎓 English Language Institute — ' + esc(title) + '</h1>' +
+    '<p style="color:#444;font-size:.9rem">Supervisor: <b>Ensieh Safariyan</b> · Printed: ' + new Date().toLocaleString() + '</p></div>';
+}
+function studentPrintRows(c){
+  if(!(c.students||[]).length) return '<p style="color:#666;font-size:.85rem">No students listed.</p>';
+  return '<table style="width:100%;border-collapse:collapse;font-size:.85rem">' +
+    '<tr style="background:#0b1f3f;color:#fff"><th style="border:1px solid #999;padding:6px;text-align:left">#</th><th style="border:1px solid #999;padding:6px;text-align:left">Student</th><th style="border:1px solid #999;padding:6px;text-align:left">Status</th><th style="border:1px solid #999;padding:6px;text-align:left">Notes</th></tr>' +
+    c.students.map((s,i) => '<tr><td style="border:1px solid #999;padding:5px">' + (i+1) + '</td><td style="border:1px solid #999;padding:5px">' + esc(s.name) + '</td><td style="border:1px solid #999;padding:5px">' + esc(s.status || '—') + '</td><td style="border:1px solid #999;padding:5px">' + esc(s.notes || '') + '</td></tr>').join('') + '</table>';
+}
+function classPrintBlock(c, opts){
+  opts = opts || {};
+  const supF = c.supervisorFeedback || {}, tf = c.teacherFeedback || {};
+  let h = '<div style="border:1px solid #bbb;border-radius:8px;padding:14px;margin-bottom:14px;break-inside:avoid">';
+  h += '<h3 style="color:#0b1f3f;font-size:1.05rem">' + esc(c.teacher) + (c.level ? ' — ' + esc(c.level) : '') + '</h3>';
+  h += '<p style="font-size:.82rem;color:#555;margin:4px 0 10px">🕒 ' + esc(c.time || '—') + ' · 🗓️ ' + esc(c.schedule ? SCHEDULE_LABEL[c.schedule] : '—') + ' · ' + esc(c.format ? FORMAT_LABEL[c.format] : 'Format not set') +
+       ' · 👥 Students: ' + (c.students||[]).length + (c.declaredStudents ? ' (reported ' + c.declaredStudents + ')' : '') +
+       (supF.status ? ' · ◉ Evaluation: ' + esc(supF.status) : '') + '</p>';
+  if(opts.students !== false){ h += '<h4 style="font-size:.85rem;color:#333;margin:8px 0 4px">👥 Student List</h4>' + studentPrintRows(c); }
+  if(opts.teacher !== false){
+    h += '<h4 style="font-size:.85rem;color:#333;margin:10px 0 4px">📝 Teacher&#39;s Feedback' + (tf.date ? ' (' + esc(tf.date) + ')' : '') + '</h4>' +
+      '<p style="font-size:.85rem;white-space:pre-wrap;border-left:3px solid #6ea8ff;padding-left:8px">' + esc(tf.text || '—') + '</p>';
+  }
+  if(opts.supervisor !== false){
+    h += '<h4 style="font-size:.85rem;color:#333;margin:10px 0 4px">🛡️ Supervisor&#39;s Feedback &amp; Evaluation' + (supF.date ? ' (' + esc(supF.date) + ')' : '') + '</h4>';
+    const sfFields = [['Overall Classroom Performance','overall'],['Teaching Quality','teachingQuality'],['Classroom Management','classroomManagement'],['Student Engagement','studentEngagement'],['Lesson Plan Implementation','lessonPlan'],['Strengths','strengths'],['Weaknesses','weaknesses'],['Areas for Improvement','improvements'],['Recommendations','recommendations'],['Required Follow-Up Actions','followUpActions']];
+    h += '<table style="width:100%;border-collapse:collapse;font-size:.82rem">';
+    sfFields.forEach(f => { if(supF[f[1]]) h += '<tr><td style="border:1px solid #ccc;padding:4px;width:210px;color:#555">' + f[0] + '</td><td style="border:1px solid #ccc;padding:4px">' + esc(supF[f[1]]) + '</td></tr>'; });
+    h += '</table>';
+    if(supF.detailedNotes) h += '<p style="font-size:.85rem;white-space:pre-wrap;border-left:3px solid #8f7ae0;padding-left:8px;margin-top:6px">' + esc(supF.detailedNotes) + '</p>';
+  }
+  if(c.notes) h += '<h4 style="font-size:.85rem;color:#333;margin:10px 0 4px">📋 Class Notes</h4><p style="font-size:.85rem;white-space:pre-wrap">' + esc(c.notes) + '</p>';
+  const fus = state.followUps.filter(f => f.classId === c.id);
+  if(fus.length){
+    h += '<h4 style="font-size:.85rem;color:#333;margin:10px 0 4px">📌 Follow-Up Items</h4><ul style="font-size:.82rem;padding-left:18px">' +
+      fus.map(f => '<li>[' + f.priority + ' / ' + f.status + '] ' + esc(f.description) + (f.dueDate ? ' (due ' + esc(f.dueDate) + ')' : '') + '</li>').join('') + '</ul>';
+  }
+  return h + '</div>';
+}
+function printReport(kind, param){
+  const root = document.getElementById('printRoot');
+  let html = '';
+  if(kind === 'all'){
+    html = printHeader('Complete Supervision Report');
+    CATEGORIES.forEach(cat => {
+      const cs = state.classes.filter(c => catOf(c) === cat.id);
+      html += '<h2 style="color:#0b1f3f;font-size:1.15rem;margin:16px 0 8px;border-bottom:1px solid #ccc;padding-bottom:4px">' + cat.icon + ' ' + cat.label + ' (' + cs.length + ')</h2>';
+      html += cs.map(c => classPrintBlock(c)).join('') || '<p style="color:#666">No classes.</p>';
+    });
+    const un = state.classes.filter(c => !catOf(c));
+    if(un.length){ html += '<h2 style="color:#8a6d00;font-size:1.15rem;margin:16px 0 8px">⚠️ Awaiting Schedule / Format Information (' + un.length + ')</h2>' + un.map(c => classPrintBlock(c)).join(''); }
+  } else if(kind === 'cat'){
+    const cat = catInfo(param);
+    const cs = state.classes.filter(c => catOf(c) === cat.id);
+    html = printHeader(cat.label + ' — Summary Report (' + cs.length + ' classes)') + cs.map(c => classPrintBlock(c)).join('') ||
+      printHeader(cat.label) + '<p style="color:#666">No classes in this category yet.</p>';
+  } else if(kind === 'class'){
+    const c = classById(param);
+    if(!c) return;
+    html = printHeader('Class Report — ' + c.teacher + (c.level ? ' (' + c.level + ')' : '')) + classPrintBlock(c);
+  } else if(kind === 'followup'){
+    html = printHeader('Follow-Up & Action Items Report');
+    html += '<table style="width:100%;border-collapse:collapse;font-size:.85rem"><tr style="background:#0b1f3f;color:#fff">' +
+      ['Class / Teacher','Description','Priority','Status','Due Date'].map(x => '<th style="border:1px solid #999;padding:6px;text-align:left">' + x + '</th>').join('') + '</tr>' +
+      state.followUps.map(f => {
+        const c = f.classId ? classById(f.classId) : null;
+        return '<tr><td style="border:1px solid #999;padding:5px">' + esc(c ? c.teacher + (c.level ? ' · ' + c.level : '') : (f.teacher || 'General')) + '</td>' +
+          '<td style="border:1px solid #999;padding:5px">' + esc(f.description) + '</td><td style="border:1px solid #999;padding:5px">' + f.priority + '</td>' +
+          '<td style="border:1px solid #999;padding:5px">' + f.status + '</td><td style="border:1px solid #999;padding:5px">' + esc(f.dueDate || '—') + '</td></tr>';
+      }).join('') + '</table>';
+  } else if(kind === 'students'){
+    html = printHeader('Student Records');
+    state.classes.forEach(c => {
+      html += '<h3 style="color:#0b1f3f;font-size:1rem;margin:14px 0 4px">' + esc(c.teacher) + (c.level ? ' — ' + esc(c.level) : '') + ' · ' + esc(c.schedule ? SCHEDULE_LABEL[c.schedule] : '') + ' · ' + (c.format ? FORMAT_LABEL[c.format] : '') + '</h3>' + studentPrintRows(c);
+    });
+  }
+  root.innerHTML = html;
+  document.body.classList.add('printing');
+  setTimeout(() => { window.print(); setTimeout(() => document.body.classList.remove('printing'), 300); }, 60);
+}
+document.querySelectorAll('[data-print]').forEach(btn => {
+  btn.addEventListener('click', () => printReport(btn.dataset.print, btn.dataset.cat));
+});
+
+/* ============================================================
+   Init
+   ============================================================ */
+renderAll();
+persist(true);
+</script>
+</body>
+</html>
